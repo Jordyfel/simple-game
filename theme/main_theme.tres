@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://bvnnmee8rw1j0"]
+
+[ext_resource type="FontFile" uid="uid://puxibp3xkvbr" path="res://theme/Exo_2/static/Exo2-Regular.ttf" id="1_ok6qe"]
+
+[resource]
+default_font = ExtResource("1_ok6qe")
+Button/font_sizes/font_size = 32
+LineEdit/font_sizes/font_size = 32
