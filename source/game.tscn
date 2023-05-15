@@ -1,6 +1,15 @@
-[gd_scene load_steps=2 format=3 uid="uid://bgdf46spfyo6i"]
+[gd_scene load_steps=4 format=3 uid="uid://bgdf46spfyo6i"]
 
 [ext_resource type="Script" path="res://source/game.gd" id="1_rtd5p"]
+[ext_resource type="Script" path="res://source/table.gd" id="2_7trmq"]
+[ext_resource type="Script" path="res://source/hand.gd" id="3_jawyp"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_rtd5p")
+
+[node name="Table" type="Node2D" parent="."]
+position = Vector2(800, 450)
+script = ExtResource("2_7trmq")
+
+[node name="Hand" type="Node2D" parent="."]
+script = ExtResource("3_jawyp")
