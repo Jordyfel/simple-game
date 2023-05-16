@@ -25,3 +25,13 @@ func add_card(card_info: Dictionary) -> void:
 	new_card.placed.connect(get_parent()._on_card_placed)
 	add_child(new_card)
 	cards.push_back(new_card)
+
+
+@rpc
+func remove_card(index: int):
+	for card_index in range(cards.size() - 1, index, -1):
+		cards[card_index].default_position = cards[card_index - 1].default_position
+		cards[card_index].position = cards[card_index - 1].default_position
+	
+	cards[index].queue_free()
+	cards.remove_at(index)
