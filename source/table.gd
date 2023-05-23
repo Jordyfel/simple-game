@@ -1,3 +1,4 @@
+@tool # so that _draw() works in the editor.
 extends Node2D
 
 

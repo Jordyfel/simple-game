@@ -7,7 +7,7 @@ var cards: Array = []
 
 
 
-func _init() -> void:
+func _init(number_of_players: int) -> void:
 	var colors:= [
 		Color.BLUE,
 		Color.GREEN,
@@ -20,10 +20,10 @@ func _init() -> void:
 		Card.CardShape.SQUARE,
 		Card.CardShape.TRIANGLE,
 	]
-	for color in colors:
+	for i in range(number_of_players):
 		for shape in shapes:
-			cards.push_back(Card.new(color, shape))
-	cards.append_array(cards.duplicate())
+			cards.push_back(Card.new(colors[i], shape))
+	#cards.append_array(cards.duplicate())
 	cards.shuffle()
 
 

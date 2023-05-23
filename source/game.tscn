@@ -13,3 +13,46 @@ script = ExtResource("2_7trmq")
 
 [node name="Hand" type="Node2D" parent="."]
 script = ExtResource("3_jawyp")
+
+[node name="Buttons" type="GridContainer" parent="."]
+custom_minimum_size = Vector2(420, 140)
+offset_left = 1140.0
+offset_top = 720.0
+offset_right = 1560.0
+offset_bottom = 860.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 2
+
+[node name="LeftButton" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+text = "Push Left"
+
+[node name="RightButton" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+text = "Push Right"
+
+[node name="SwapButton" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+text = "Swap"
+
+[node name="TakeButton" type="Button" parent="Buttons"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+disabled = true
+text = "Take"
+
+[connection signal="pressed" from="Buttons/LeftButton" to="." method="_on_left_button_pressed"]
+[connection signal="pressed" from="Buttons/RightButton" to="." method="_on_right_button_pressed"]
+[connection signal="pressed" from="Buttons/SwapButton" to="." method="_on_swap_button_pressed"]
+[connection signal="pressed" from="Buttons/TakeButton" to="." method="_on_take_button_pressed"]
