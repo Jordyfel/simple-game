@@ -12,14 +12,13 @@ var player_index: int
 
 
 func _ready() -> void:
-	if multiplayer.is_server():
-		Lobby.player_loaded()
-	else:
-		Lobby.player_loaded.rpc_id(1)
+	Lobby.player_loaded.rpc_id(1)
 
 
 # Called only on the server.
 func start_game() -> void:
+	multiplayer.multiplayer_peer.refuse_new_connections = true
+	
 	create_fields.rpc(Lobby.players)
 	
 	deck = Deck.new(players.size())
@@ -28,13 +27,10 @@ func start_game() -> void:
 			draw_card(player)
 	
 	var id = players[randi_range(0, players.size() - 1)].id
-	if id == 1:
-		set_turn(true)
-	else:
-		set_turn.rpc_id(id, true)
+	set_turn.rpc_id(id, true)
 
 
-@rpc
+@rpc("call_local")
 func set_turn(turn: bool) -> void:
 	my_turn = turn
 	for button in $Buttons.get_children():
@@ -42,17 +38,11 @@ func set_turn(turn: bool) -> void:
 
 
 func end_turn(index: int) -> void:
-	if index == 0:
-		set_turn(false)
-	else:
-		set_turn.rpc_id(players[index].id, false)
+	set_turn.rpc_id(players[index].id, false)
 	
 	var starting_player_index: int = index + 1 if index + 1 < players.size() else 0
 	
-	if starting_player_index == 0:
-		set_turn(true)
-	else:
-		set_turn.rpc_id(players[starting_player_index].id, true)
+	set_turn.rpc_id(players[starting_player_index].id, true)
 
 
 @rpc("call_local")
@@ -84,10 +74,7 @@ func draw_card(player: Player) -> void:
 	var card:= deck.draw()
 	player.hand.push_back(card)
 	var card_info:= {"color": card.color, "shape": card.shape}
-	if player.id == 1:
-		$Hand.add_card(card_info)
-	else:
-		$Hand.add_card.rpc_id(player.id, card_info)
+	$Hand.add_card.rpc_id(player.id, card_info)
 
 
 func move_card(card: HandCard, to_field_idx: int, to_zone_idx: int) -> void:
@@ -107,21 +94,14 @@ func move_card(card: HandCard, to_field_idx: int, to_zone_idx: int) -> void:
 	rot_tween.tween_property(card, "rotation", new_rotation, TWEEN_DURATION)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func play_from_hand(index_in_hand: int) -> void:
-	var acting_player_index: int
-	if multiplayer.get_remote_sender_id() == 0:
-		acting_player_index = 0
-	else:
-		acting_player_index = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
+	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
 	if not fields[acting_player_index].cards.slice(0, 2).has(null):
 		return
 	
-	if acting_player_index == 0:
-		$Hand.remove_card(index_in_hand)
-	else:
-		$Hand.remove_card.rpc_id(multiplayer.get_remote_sender_id(), index_in_hand)
+	$Hand.remove_card.rpc_id(multiplayer.get_remote_sender_id(), index_in_hand)
 	
 	var card: Card = players[acting_player_index].hand[index_in_hand]
 	play_card.rpc({"color": card.color, "shape": card.shape}, acting_player_index)
@@ -143,35 +123,22 @@ func play_card(card_info: Dictionary, field_index: int) -> void:
 
 func _on_card_placed(hand_card: HandCard, placement_position: Vector2) -> void:
 	if placement_position.distance_to($Table.position) < $Table.RADIUS:
-		if multiplayer.is_server():
-			play_from_hand($Hand.cards.find(hand_card))
-		else:
-			play_from_hand.rpc_id(1, $Hand.cards.find(hand_card))
+		play_from_hand.rpc_id(1, $Hand.cards.find(hand_card))
 
 
 func _on_left_button_pressed() -> void:
 	if my_turn:
-		if multiplayer.is_server():
-			action_push("left")
-		else:
-			action_push.rpc_id(1, "left")
+		action_push.rpc_id(1, "left")
 
 
 func _on_right_button_pressed() -> void:
 	if my_turn:
-		if multiplayer.is_server():
-			action_push("right")
-		else:
-			action_push.rpc_id(1, "right")
+		action_push.rpc_id(1, "right")
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func action_push(direction: String) -> void:
-	var acting_player_index: int
-	if multiplayer.get_remote_sender_id() == 0:
-		acting_player_index = 0
-	else:
-		acting_player_index = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
+	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
 	push.rpc(acting_player_index, direction)
 
@@ -222,19 +189,12 @@ func push(action_player_index: int, direction: String) -> void:
 
 func _on_swap_button_pressed() -> void:
 	if my_turn:
-		if multiplayer.is_server():
-			action_swap()
-		else:
-			action_swap.rpc_id(1)
+		action_swap.rpc_id(1)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func action_swap() -> void:
-	var acting_player_index: int
-	if multiplayer.get_remote_sender_id() == 0:
-		acting_player_index = 0
-	else:
-		acting_player_index = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
+	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
 	swap_cards.rpc(acting_player_index, 0, 1)
 
@@ -251,12 +211,11 @@ func swap_cards(acting_player_index: int, from_zone: int, to_zone: int) -> void:
 
 func _on_take_button_pressed() -> void:
 	if my_turn:
-		if multiplayer.is_server():
-			action_take()
-		else:
-			action_take.rpc_id(1)
+		action_take.rpc_id(1)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func action_take() -> void:
-	pass
+	var _acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
+	
+	# rpc take

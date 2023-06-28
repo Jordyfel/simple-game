@@ -63,7 +63,7 @@ func load_game() -> void:
 	get_tree().change_scene_to_file("res://source/game.tscn")
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local")
 func player_loaded() -> void:
 	if multiplayer.is_server():
 		players_loaded += 1

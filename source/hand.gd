@@ -10,7 +10,7 @@ func _ready() -> void:
 	pass
 
 
-@rpc
+@rpc("call_local")
 func add_card(card_info: Dictionary) -> void:
 	var card = Card.new(card_info["color"], card_info["shape"])
 	const CARDS_IN_COLUMN = 4
@@ -27,7 +27,7 @@ func add_card(card_info: Dictionary) -> void:
 	cards.push_back(new_card)
 
 
-@rpc
+@rpc("call_local")
 func remove_card(index: int):
 	for card_index in range(cards.size() - 1, index, -1):
 		cards[card_index].default_position = cards[card_index - 1].default_position
