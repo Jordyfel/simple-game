@@ -41,6 +41,20 @@ func set_turn(turn: bool) -> void:
 		button.disabled = not turn
 
 
+func end_turn(index: int) -> void:
+	if index == 0:
+		set_turn(false)
+	else:
+		set_turn.rpc_id(players[index].id, false)
+	
+	var starting_player_index: int = index + 1 if index + 1 < players.size() else 0
+	
+	if starting_player_index == 0:
+		set_turn(true)
+	else:
+		set_turn.rpc_id(players[starting_player_index].id, true)
+
+
 @rpc("call_local")
 func create_fields(lobby_players_info: Dictionary) -> void:
 	var keys = lobby_players_info.keys()
@@ -76,14 +90,12 @@ func draw_card(player: Player) -> void:
 		$Hand.add_card.rpc_id(player.id, card_info)
 
 
-@rpc("call_local")
-func move_card(from_field_idx: int, from_zone_idx: int, to_field_idx: int, to_zone_idx: int) -> void:
+func move_card(card: HandCard, to_field_idx: int, to_zone_idx: int) -> void:
 	const TWEEN_DURATION = 0.2
 	
-	if fields[from_field_idx].cards[from_zone_idx] == null:
+	if card == null:
 		return
 	
-	var card: HandCard = fields[from_field_idx].cards[from_zone_idx]
 	var to_field = fields[to_field_idx]
 	
 	var pos_tween = get_tree().create_tween()
@@ -140,27 +152,72 @@ func _on_card_placed(hand_card: HandCard, placement_position: Vector2) -> void:
 func _on_left_button_pressed() -> void:
 	if my_turn:
 		if multiplayer.is_server():
-			action_push_left()
+			action_push("left")
 		else:
-			action_push_left.rpc_id(1)
-
-
-@rpc("any_peer")
-func action_push_left() -> void:
-	pass
+			action_push.rpc_id(1, "left")
 
 
 func _on_right_button_pressed() -> void:
 	if my_turn:
 		if multiplayer.is_server():
-			action_push_right()
+			action_push("right")
 		else:
-			action_push_right.rpc_id(1)
+			action_push.rpc_id(1, "right")
 
 
 @rpc("any_peer")
-func action_push_right() -> void:
-	pass
+func action_push(direction: String) -> void:
+	var acting_player_index: int
+	if multiplayer.get_remote_sender_id() == 0:
+		acting_player_index = 0
+	else:
+		acting_player_index = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
+	
+	push.rpc(acting_player_index, direction)
+
+
+@rpc("call_local")
+func push(action_player_index: int, direction: String) -> void:
+	var card_index = 0 if direction == "left" else 1
+	if fields[action_player_index].cards[card_index] == null:
+		return
+	
+	var fields_with_a_card: Array[int] = []
+	for field_index in fields.size():
+		if fields[field_index].cards[card_index] != null:
+			fields_with_a_card.push_back(field_index)
+	
+	if fields_with_a_card.size() == 1:
+		return # Maybe end turn?
+	
+	var custom_range
+	if direction == "left":
+		# Iterate forward.
+		custom_range = range(fields_with_a_card.size())
+	elif direction == "right":
+		# Iterate backward.
+		custom_range = range(fields_with_a_card.size() - 1, -1, -1)
+	
+	var increment: int = 1 if direction == "left" else -1
+	var temp: HandCard
+	for index in custom_range:
+		var next_field_index: int
+		if index + increment > fields_with_a_card.size() - 1:
+			next_field_index = 0
+		else:
+			next_field_index = fields_with_a_card[index + increment]
+		
+		if not temp:
+			temp = fields[fields_with_a_card[index]].cards[card_index]
+		
+		move_card(temp, next_field_index, card_index)
+		
+		var swap = fields[next_field_index].cards[card_index]
+		fields[next_field_index].cards[card_index] = temp
+		temp = swap
+	
+	if multiplayer.is_server():
+		end_turn(action_player_index)
 
 
 func _on_swap_button_pressed() -> void:
@@ -179,14 +236,14 @@ func action_swap() -> void:
 	else:
 		acting_player_index = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
-	move_card.rpc(acting_player_index, 0, acting_player_index, 1)
-	move_card.rpc(acting_player_index, 1, acting_player_index, 0)
-	
 	swap_cards.rpc(acting_player_index, 0, 1)
 
 
 @rpc("call_local")
 func swap_cards(acting_player_index: int, from_zone: int, to_zone: int) -> void:
+	move_card(fields[acting_player_index].cards[0], acting_player_index, 1)
+	move_card(fields[acting_player_index].cards[1], acting_player_index, 0)
+	
 	var swap = fields[acting_player_index].cards[from_zone]
 	fields[acting_player_index].cards[from_zone] = fields[acting_player_index].cards[to_zone]
 	fields[acting_player_index].cards[to_zone] = swap
