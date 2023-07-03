@@ -30,7 +30,7 @@ func start_game() -> void:
 	set_turn.rpc_id(id, true)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func set_turn(turn: bool) -> void:
 	my_turn = turn
 	for button in $Buttons.get_children():
@@ -45,7 +45,7 @@ func end_turn(index: int) -> void:
 	set_turn.rpc_id(players[starting_player_index].id, true)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func create_fields(lobby_players_info: Dictionary) -> void:
 	var keys = lobby_players_info.keys()
 	keys.sort() # Need to make sure this array is the same on all clients.
@@ -94,7 +94,7 @@ func move_card(card: HandCard, to_field_idx: int, to_zone_idx: int) -> void:
 	rot_tween.tween_property(card, "rotation", new_rotation, TWEEN_DURATION)
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "reliable")
 func play_from_hand(index_in_hand: int) -> void:
 	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
@@ -108,7 +108,7 @@ func play_from_hand(index_in_hand: int) -> void:
 	players[acting_player_index].hand.erase(card)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func play_card(card_info: Dictionary, field_index: int) -> void:
 	var card:= HandCard.new(Card.new(card_info["color"], card_info["shape"]))
 	var field = fields[field_index]
@@ -136,14 +136,14 @@ func _on_right_button_pressed() -> void:
 		action_push.rpc_id(1, "right")
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "reliable")
 func action_push(direction: String) -> void:
 	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
 	push.rpc(acting_player_index, direction)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func push(action_player_index: int, direction: String) -> void:
 	var card_index = 0 if direction == "left" else 1
 	if fields[action_player_index].cards[card_index] == null:
@@ -192,14 +192,14 @@ func _on_swap_button_pressed() -> void:
 		action_swap.rpc_id(1)
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "reliable")
 func action_swap() -> void:
 	var acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	
 	swap_cards.rpc(acting_player_index, 0, 1)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func swap_cards(acting_player_index: int, from_zone: int, to_zone: int) -> void:
 	move_card(fields[acting_player_index].cards[0], acting_player_index, 1)
 	move_card(fields[acting_player_index].cards[1], acting_player_index, 0)
@@ -214,7 +214,7 @@ func _on_take_button_pressed() -> void:
 		action_take.rpc_id(1)
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "reliable")
 func action_take() -> void:
 	var _acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
 	

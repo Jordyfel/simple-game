@@ -31,7 +31,7 @@ func join_game(address: String = "") -> int:
 	var error = peer.create_client(address, PORT)
 	if error:
 		return error
-	multiplayer.set_multiplayer_peer(peer)
+	multiplayer.multiplayer_peer = peer
 	return 0
 
 
@@ -40,7 +40,7 @@ func create_game() -> int:
 	var error = peer.create_server(PORT, MAX_CONNECTIONS)
 	if error:
 		return error
-	multiplayer.set_multiplayer_peer(peer)
+	multiplayer.multiplayer_peer = peer
 	
 	players[1] = player_info
 	player_connected.emit(1, player_info)
@@ -48,22 +48,22 @@ func create_game() -> int:
 
 
 func remove_multiplayer_peer() -> void:
-	multiplayer.set_multiplayer_peer(null)
+	multiplayer.multiplayer_peer = null
 
 
-@rpc("any_peer")
+@rpc("any_peer", "reliable")
 func register_player(new_player_info: Dictionary) -> void:
 	var new_player_id:= multiplayer.get_remote_sender_id()
 	players[new_player_id] = new_player_info
 	player_connected.emit(new_player_id, new_player_info)
 
 
-@rpc("call_local")
+@rpc("call_local", "reliable")
 func load_game() -> void:
 	get_tree().change_scene_to_file("res://source/game.tscn")
 
 
-@rpc("any_peer", "call_local")
+@rpc("any_peer", "call_local", "reliable")
 func player_loaded() -> void:
 	if multiplayer.is_server():
 		players_loaded += 1
@@ -89,9 +89,9 @@ func _on_connected_ok() -> void:
 
 
 func _on_connected_fail() -> void:
-	remove_multiplayer_peer()
+	multiplayer.multiplayer_peer = null
 
 
 func _on_server_disconnected() -> void:
-	remove_multiplayer_peer()
+	multiplayer.multiplayer_peer = null
 	server_disconnected.emit()

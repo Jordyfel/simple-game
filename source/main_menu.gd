@@ -18,10 +18,12 @@ func _on_join_button_pressed() -> void:
 			return
 		%JoinButton.text = "Leave Game"
 		$LobbyDisplay.show()
+		%CreateButton.disabled = true
 	else:
 		%JoinButton.text = "Join Game"
 		Lobby.remove_multiplayer_peer()
 		$LobbyDisplay.hide()
+		%CreateButton.disabled = false
 		for lobby_element in %LobbyElementContainer.get_children():
 			lobby_element.queue_free()
 
@@ -37,11 +39,13 @@ func _on_create_button_pressed() -> void:
 		$LobbyDisplay.show()
 		%StartButton.show()
 		%CreateButton.text = "Stop"
+		%JoinButton.disabled = true
 	else:
 		%CreateButton.text = "Create Game"
 		Lobby.remove_multiplayer_peer()
 		$LobbyDisplay.hide()
 		%StartButton.hide()
+		%JoinButton.disabled = false
 		for lobby_element in %LobbyElementContainer.get_children():
 			lobby_element.queue_free()
 
