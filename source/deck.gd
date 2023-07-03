@@ -7,13 +7,7 @@ var cards: Array = []
 
 
 
-func _init(number_of_players: int) -> void:
-	var colors:= [
-		Color.BLUE,
-		Color.GREEN,
-		Color.RED,
-		Color.YELLOW,
-	]
+func _init(number_of_players: int, colors: PackedColorArray) -> void:
 	var shapes = [
 		Card.CardShape.CIRCLE,
 		Card.CardShape.HEXAGON,

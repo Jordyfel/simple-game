@@ -6,10 +6,12 @@
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1_rtd5p")
+card_colors = PackedColorArray(0.654902, 0.137255, 0.137255, 1, 0.113725, 0.211765, 0.819608, 1, 0.152941, 0.654902, 0, 1, 0.886275, 0.835294, 0.0627451, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1)
 
 [node name="Table" type="Node2D" parent="."]
 position = Vector2(800, 450)
 script = ExtResource("2_7trmq")
+color = Color(0.196078, 0.137255, 0.0862745, 1)
 
 [node name="Hand" type="Node2D" parent="."]
 script = ExtResource("3_jawyp")
@@ -45,14 +47,6 @@ size_flags_vertical = 3
 disabled = true
 text = "Swap"
 
-[node name="TakeButton" type="Button" parent="Buttons"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-disabled = true
-text = "Take"
-
 [connection signal="pressed" from="Buttons/LeftButton" to="." method="_on_left_button_pressed"]
 [connection signal="pressed" from="Buttons/RightButton" to="." method="_on_right_button_pressed"]
 [connection signal="pressed" from="Buttons/SwapButton" to="." method="_on_swap_button_pressed"]
-[connection signal="pressed" from="Buttons/TakeButton" to="." method="_on_take_button_pressed"]

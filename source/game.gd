@@ -9,9 +9,12 @@ var fields: Array = []
 var my_turn:= false
 var player_index: int
 
+@export var card_colors: PackedColorArray
+
 
 
 func _ready() -> void:
+	assert(card_colors.size() >= 8)
 	Lobby.player_loaded.rpc_id(1)
 
 
@@ -21,13 +24,14 @@ func start_game() -> void:
 	
 	create_fields.rpc(Lobby.players)
 	
-	deck = Deck.new(players.size())
+	deck = Deck.new(players.size(), card_colors)
 	for player in players:
 		for i in range(4):
 			draw_card(player)
 	
 	var id = players[randi_range(0, players.size() - 1)].id
 	set_turn.rpc_id(id, true)
+	fields[Lobby.players[id]["index"]].highlight_name.rpc()
 
 
 @rpc("call_local", "reliable")
@@ -39,10 +43,12 @@ func set_turn(turn: bool) -> void:
 
 func end_turn(index: int) -> void:
 	set_turn.rpc_id(players[index].id, false)
+	fields[index].unhighlight_name.rpc()
 	
 	var starting_player_index: int = index + 1 if index + 1 < players.size() else 0
 	
 	set_turn.rpc_id(players[starting_player_index].id, true)
+	fields[starting_player_index].highlight_name.rpc()
 
 
 @rpc("call_local", "reliable")
@@ -58,10 +64,11 @@ func create_fields(lobby_players_info: Dictionary) -> void:
 		var field: Field = load("res://source/field.tscn").instantiate()
 		var fraction:= (index as float) / keys.size() as float
 		field.position = table_position + Vector2.from_angle(TAU * fraction) * table_radius * 0.5 
-		add_child(field)
+		add_child(field, true)
 		field.player_name =  lobby_players_info[id]["name"]
 		field.look_at(table_position)
 		field.rotation += PI / 2
+		field.make_label_horizontal.call_deferred()
 		fields.push_back(field)
 		
 		# This is here so that players and fields array have the same order on the server
@@ -207,15 +214,3 @@ func swap_cards(acting_player_index: int, from_zone: int, to_zone: int) -> void:
 	var swap = fields[acting_player_index].cards[from_zone]
 	fields[acting_player_index].cards[from_zone] = fields[acting_player_index].cards[to_zone]
 	fields[acting_player_index].cards[to_zone] = swap
-
-
-func _on_take_button_pressed() -> void:
-	if my_turn:
-		action_take.rpc_id(1)
-
-
-@rpc("any_peer", "call_local", "reliable")
-func action_take() -> void:
-	var _acting_player_index: int = Lobby.players[multiplayer.get_remote_sender_id()]["index"]
-	
-	# rpc take
